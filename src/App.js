@@ -4,6 +4,13 @@ import Keyboard from "react-simple-keyboard";
 import Icon from './assets/img/question.png';
 import "react-simple-keyboard/build/css/index.css";
 import styled from 'styled-components';
+import axios from 'axios';
+import { Modal, notification } from 'antd';
+import 'antd/dist/antd.css';
+import {
+  CloseCircleOutlined,
+} from '@ant-design/icons';
+import './assets/css/table.css';
 
 const Wrapper = styled.div`
   padding: 20px;
@@ -54,22 +61,30 @@ const InputStyle = styled.input`
   border: 2px solid #8e44ad;
 `;
 
-const ButtonStyle= styled.button`
+const ButtonStyle = styled.button`
   width: 100%;
-  height: 70px;
+  height: 50px;
   border-radius: 8px;
-  padding: 10px;
+
   font-size: 25px;
   margin-bottom:30px;
   background-color: #2ecc71;
   border: 2px solid #2ecc71;
+  color: white;
+  font-weight: bold;
 `;
+
+
 
 //import "./styles.css";
 
 function App() {
+
   const [input, setInput] = useState("");
   const [layout, setLayout] = useState("default");
+  const [data, setData] = useState([]);
+  const [modal, setModal] = useState(false)
+
   const keyboard = useRef();
 
   const onChange = input => {
@@ -77,10 +92,48 @@ function App() {
     console.log("Input changed", input);
   };
 
+  const modalTrigger = () => {
+    setModal(!modal)
+  }
+
   const handleShift = () => {
     const newLayoutName = layout === "default" ? "shift" : "default";
     setLayout(newLayoutName);
   };
+
+  const getData = async () => {
+    console.log(input)
+    if (input === '') {
+      notification.open({
+        message: 'Nomor berkas tidak boleh kosong',
+        description:
+          '',
+        icon: <CloseCircleOutlined style={{ color: '#e74c3c' }} />,
+      });
+    } else {
+      axios.get(`https://sicantikws.layanan.go.id/api/TemplateData/keluaran/10916.json?no_permohonan=${input}`)
+        .then(res => {
+          console.log(res.data.data.berkas.length)
+          if (res.data.data.berkas.length === 0) {
+            notification.open({
+              message: 'Data tidak ditemukan',
+              description:
+                '',
+              icon: <CloseCircleOutlined style={{ color: '#e74c3c' }} />,
+            });
+          } else {
+            setData(res.data.data.berkas)
+            console.log(res.data.data.berkas.reverse())
+            setInput('');
+            keyboard.current.setInput('');
+            modalTrigger()
+          }
+
+        }
+        )
+    }
+
+  }
 
   const onKeyPress = button => {
     console.log("Button pressed", button);
@@ -105,7 +158,7 @@ function App() {
             <img src={Icon} style={{ width: 250 }} />
           </Colimg>
           <Coltext>
-            <Text>Bingung berkas perizinan anda?</Text>
+            <Text>Bingung berkas perizinan SiCantik anda?</Text>
             <Text2>Cari berkas perizinan anda disini</Text2>
           </Coltext>
         </Rowtr>
@@ -115,23 +168,77 @@ function App() {
           <Coltext>
             <InputStyle
               value={input}
-              placeholder={"Masukan Kode Berkas Izin Anda"}
+              placeholder={"Masukan Nomor Permohonan Izin Anda"}
               onChange={onChangeInput}
             />
           </Coltext>
           <Colimg>
-            <ButtonStyle >Cari</ButtonStyle>
+            <ButtonStyle onClick={getData} >Cari</ButtonStyle>
           </Colimg>
         </Rowtr>
       </Row>
-      <div style={{paddingLeft:20, paddingRight: 20}}>
-      <Keyboard
-        keyboardRef={r => (keyboard.current = r)}
-        layoutName={layout}
-        onChange={onChange}
-        onKeyPress={onKeyPress}
-      />
+      <div style={{ paddingLeft: 20, paddingRight: 20 }}>
+        <Keyboard
+          keyboardRef={r => (keyboard.current = r)}
+          layoutName={layout}
+          onChange={onChange}
+          onKeyPress={onKeyPress}
+        />
       </div>
+
+      <Modal
+        title="Tracking Berkas Perizinan"
+        centered
+        visible={modal}
+        //onOk={createorupdate}
+        onCancel={modalTrigger}
+        footer={null}
+        width={700}
+      >
+        {/* <table class='table is-striped is-narrow is-hoverable is-fullwidth'>
+						<tr>
+								<td>Nomor Permohonan {data.data.data[0]}</td>
+								<td>{data.berkas.no_permohonan}</td>
+                </tr>
+							"</tr>"+
+							"<tr>"+
+								"<td>Nama Pemohon</td>"+
+								"<td>"+response['data']['berkas'][2]['nama']+"</td>"+
+							"</tr>"+
+							"<tr>"+
+								"<td>Tempat Lahir</td>"+
+								"<td>"+response['data']['berkas'][2]['tempat_lahir']+"</td>"+
+							"</tr>"+
+							"<tr>"+
+								"<td>Tanggal Lahir</td>"+
+								"<td>"+response['data']['berkas'][2]['tanggal_lahir']+"</td>"+
+							"</tr>"+
+							"<tr>"+
+								"<td>Jenis Izin</td>"+
+								"<td>"+response['data']['berkas'][2]['jenis_izin']+"</td>"+
+							"</tr>"+
+						</table> */}
+        <table style={{ fontWeight:'bold', fontSize:14, width:'100%' }} className="table1">
+          <thead>
+            <tr>
+              <td>No</td>
+              <td>Nama Proses</td>
+              <td>Status</td>
+              </tr>
+            </thead>
+          {data.reverse().map((item, index) =>
+              <tr>
+                <td>{index+1}</td>
+                <td>{item.nama_proses}</td>
+                <td style={ item.status === 'Selesai' ? {color:'black'} :  item.status === 'Proses' ? {color:'#05c46b'} : {color:'#ffdd59'} }  >{item.status}</td>
+              </tr>
+          )}
+
+        </table>
+      </Modal>
+      <div style={{ width: '100%', textAlign:'center', marginTop: 20 }}>
+        <p style={{ fontWeight: 'bold', color: 'white' }}>Dinas Penenaman Modal dan tenaga Kerja Kota Singkawang</p>
+        </div>
     </Wrapper>
   );
 }
