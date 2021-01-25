@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import Keyboard from "react-simple-keyboard";
 import Icon from './assets/img/question.png';
@@ -9,8 +9,11 @@ import { Modal, notification } from 'antd';
 import 'antd/dist/antd.css';
 import {
   CloseCircleOutlined,
+  FullscreenOutlined
 } from '@ant-design/icons';
 import './assets/css/table.css';
+
+const screenfull = require('screenfull');
 
 const Wrapper = styled.div`
   padding: 20px;
@@ -74,6 +77,16 @@ const ButtonStyle = styled.button`
   font-weight: bold;
 `;
 
+const ButtonFullScreen = styled.button`
+  border-radius: 8px;
+  font-size: 25px;
+  margin-bottom:30px;
+  border: 2px solid #8e44ad;
+  color: white;
+  font-weight: bold;
+  float: right;
+`;
+
 
 
 //import "./styles.css";
@@ -87,6 +100,14 @@ function App() {
 
   const keyboard = useRef();
 
+  useEffect(() => {
+    if (screenfull.isEnabled) {
+      screenfull.on('change', () => {
+        console.log('Am I fullscreen?', screenfull.isFullscreen ? 'Yes' : 'No');
+      });
+    }
+  }, [])
+
   const onChange = input => {
     setInput(input);
     console.log("Input changed", input);
@@ -94,6 +115,12 @@ function App() {
 
   const modalTrigger = () => {
     setModal(!modal)
+  }
+
+  const toggleFullScreen = () => {
+    if (screenfull.isEnabled) {
+      screenfull.toggle();
+    }
   }
 
   const handleShift = () => {
@@ -152,6 +179,7 @@ function App() {
 
   return (
     <Wrapper>
+      <ButtonFullScreen style={{ backgroundColor: '#9b59b6' }} onClick={toggleFullScreen}><FullscreenOutlined /></ButtonFullScreen>
       <Row>
         <Rowtr>
           <Colimg>
@@ -218,27 +246,27 @@ function App() {
 								"<td>"+response['data']['berkas'][2]['jenis_izin']+"</td>"+
 							"</tr>"+
 						</table> */}
-        <table style={{ fontWeight:'bold', fontSize:14, width:'100%' }} className="table1">
+        <table style={{ fontWeight: 'bold', fontSize: 14, width: '100%' }} className="table1">
           <thead>
             <tr>
               <td>No</td>
               <td>Nama Proses</td>
               <td>Status</td>
-              </tr>
-            </thead>
+            </tr>
+          </thead>
           {data.reverse().map((item, index) =>
-              <tr>
-                <td>{index+1}</td>
-                <td>{item.nama_proses}</td>
-                <td style={ item.status === 'Selesai' ? {color:'black'} :  item.status === 'Proses' ? {color:'#05c46b'} : {color:'#ffdd59'} }  >{item.status}</td>
-              </tr>
+            <tr>
+              <td>{index + 1}</td>
+              <td>{item.nama_proses}</td>
+              <td style={item.status === 'Selesai' ? { color: 'black' } : item.status === 'Proses' ? { color: '#05c46b' } : { color: '#ffdd59' }}  >{item.status}</td>
+            </tr>
           )}
 
         </table>
       </Modal>
-      <div style={{ width: '100%', textAlign:'center', marginTop: 20 }}>
+      <div style={{ width: '100%', textAlign: 'center', marginTop: 20 }}>
         <p style={{ fontWeight: 'bold', color: 'white' }}>Dinas Penenaman Modal dan tenaga Kerja Kota Singkawang</p>
-        </div>
+      </div>
     </Wrapper>
   );
 }
